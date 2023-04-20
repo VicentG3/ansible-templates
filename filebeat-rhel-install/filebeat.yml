@@ -1,0 +1,8 @@
+filebeat.inputs:
+- type: log
+  paths:
+    - /var/log/syslog
+    - /home/lol/log.log
+output.logstash:
+  hosts: ["example.com"]
+

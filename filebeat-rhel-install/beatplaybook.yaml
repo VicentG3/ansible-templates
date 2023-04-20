@@ -1,0 +1,61 @@
+---
+  - hosts: iria
+    become: true
+    name: Install and configure Filebeat
+    vars:
+      filebeatrpm: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-8.7.0-x86_64.rpm
+
+    tasks:
+      -   name: Create temporary folder to place the installer
+          file:
+            path: /tmp/filebeatrpm
+            state: directory
+            mode: '0755'
+
+      -   name: Get Filebeat
+          get_url:
+            url: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-8.7.0-x86_64.rpm
+            dest: /tmp/filebeatrpm/filebeat-8.7.0-x86_64.rpm
+            mode: 7777
+
+      -   name: Install filebeat
+          command: rpm -i /tmp/filebeatrpm/filebeat-8.7.0-x86_64.rpm
+          become: true
+
+      -   name: Enable and start filebeat
+          command: systemctl enable filebeat
+          become: true
+          tags:
+            - enable
+
+      -   name: Enable and start filebeat
+          command: systemctl start filebeat
+          become: true
+          tags:
+            - start
+
+      -   name: Configure filebeat.yaml from a template
+          ansible.builtin.template:
+            src: filebeat.yaml
+            dest: /etc/filebeat/filebeat.yml
+            mode: '0600'
+            owner: root
+            group: root
+          tags:
+            - config
+
+      -   name: Enable and start filebeat
+          command: systemctl restart filebeat
+          become: true
+          tags:
+            - restart
+
+
+
+
+
+
+
+
+
+
