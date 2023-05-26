@@ -1,0 +1,54 @@
+---
+ - hosts: 'cloudworkers' 
+   become: true
+   name: Start kubernetes with containerd on AlmaLinux 9
+
+   vars:
+      jointoken: "kubeadm join kube.vixx.es:6443 --token r1s6vl.vkgj1aovgbko87uq --discovery-token-ca-cert-hash sha256:73e160ca865d2e679d9d8713f00d8e02ce166f75b3e8073b5ae78013c272a77b"
+
+   tasks:
+
+####################### RESTART #################################
+
+   -  name: systemctl for  cri-o
+      become: true
+      systemd:
+         name: crio
+         enabled: true
+         state: restarted
+         daemon_reload: true
+      tags:
+        - systemctlc
+
+   -  name: systemctl for kube
+      become: true
+      systemd:
+         name: kubelet
+         enabled: true
+         state: restarted
+         daemon_reload: true
+      tags:
+        - systemctlk
+
+####################### GET KEY AND JOIN #################################
+
+   -  name: "join the cluster"
+      become: true
+      shell: " {{ jointoken }} "
+      tags:
+        - joincluster
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

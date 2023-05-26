@@ -1,0 +1,98 @@
+---
+ - hosts: 'workers, master' 
+   become: true
+   name: Start kubernetes with containerd on AlmaLinux 9
+
+   vars:
+      jointoken: 
+
+   tasks:
+
+####################### RESTART #################################
+
+   -  name: systemctl for cri-o
+      systemd:
+         name: cri-o
+         enabled: true
+         state: restarted
+         daemon_reload: true
+      tags:
+        - systemctlc
+
+   -  name: systemctl for kube
+      systemd:
+         name: kubelet
+         enabled: true
+         state: restarted
+         daemon_reload: true
+      tags:
+        - systemctlk
+
+####################### INIT CLUSTER #################################
+
+   -  name: Init kubernetes cluster 
+      command: kubeadm init --config /root/kubeadmconf.yaml
+      tags:
+        - initcluster
+      ignore_errors: True
+      when: "'master' in group_names"
+
+   -  name: export kuberntes configuration
+      shell: export KUBECONFIG=/etc/kubernetes/admin.conf
+      tags:
+        - exportconf
+      when: "'master' in group_names"
+
+   -  name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
+      command: cp /etc/kubernetes/admin.conf /root/.kube/config
+      tags:
+        - createkubeconf
+      when: "'master' in group_names"   
+
+   -  name: "Downloading CNI Plugin"
+      command: "kubectl apply  -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+      ignore_errors: True
+      tags:
+        - cniplugin
+      when: "'master' in group_names"
+
+####################### GET KEY AND JOIN #################################
+
+   -  name: "THE JOIN TOKEN"
+      command: "kubeadm token create --print-join-command"
+      register: jointoken
+      tags:
+        - getjoin
+      when: "'master' in group_names"
+
+   -  name: "set fact for global variable"
+      set_fact:
+         joink: "{{ jointoken.stdout }}"
+      when: "'master' in group_names"
+      tags:
+        - setfact
+
+   -  name: "save to local token"
+      shell: "echo {{ jointoken }} > token.txt"
+      when: "'master' in group_names"
+
+   -  name: "join the cluster"
+      shell: " {{ hostvars['master1'].joink }} "
+      tags:
+        - joincluster
+      when: "'workers' in group_names"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

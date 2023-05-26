@@ -1,0 +1,74 @@
+---
+ - hosts: 'workers, master' 
+   become: true
+   name: Configure AlmaLinux 9
+
+   tasks:
+
+####################### OS CONF #################################
+
+   -  name: Config system to allow Kuberntes to work properly
+      shell: setenforce 0 && sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+      tags:
+        - confsystem
+
+   -  name: Allow ip forward
+      sysctl:
+         name: net.ipv4.ip_forward
+         value: 1
+         reload: yes
+      tags:
+        - ipforward
+
+   -  name: More IP
+      shell: echo "net.bridge.bridge-nf-call-iptables  = 1" >> /etc/sysctl.d/k8s.conf && sysctl --system
+      tags:
+        - confsystem   
+
+   -  name: Enable br_netfilter
+      community.general.modprobe:
+         name: br_netfilter
+         state: present
+         persistent: present
+      tags:
+        - modprobe
+
+   -  name: Enable overlay
+      community.general.modprobe:
+         name: overlay
+         state: present
+         persistent: present
+      tags:
+        - overlay
+
+####################### KUBE CONF #################################
+
+   -  name: configuration file for kuberntes
+      ansible.builtin.template:
+        src: kubeadmconf.yaml
+        dest: /root/kubeadmconf.yaml
+        owner: root
+        group: root
+      tags:
+        - confadd
+
+   -  name: create kube folders
+      file: 
+        path: "/root/.kube"
+        state: directory
+      tags:
+        - createkubedir
+      when: "'master' in group_names" 
+
+
+
+
+
+
+
+
+
+
+
+
+

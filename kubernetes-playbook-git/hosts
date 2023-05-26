@@ -1,0 +1,13 @@
+#Example IPs
+
+[master]
+master1 ansible_host=192.168.9.10
+
+[workers]
+worker1 ansible_host=192.168.9.11
+worker2 ansible_host=192.168.9.12
+
+[cloudworkers]
+cloud1 ansible_host=220.56.9.45
+cloud2 ansible_host=220.56.9.46
+cloud3 ansible_host=220.56.9.47

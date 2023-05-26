@@ -1,0 +1,65 @@
+---
+ - hosts: 'workers, master' 
+   become: true
+   name: Install containerd, kubectl, kubelet and kubeadm on AlmaLinux 9
+
+   tasks:
+  
+   - name: "Creating Yum Repo For Kubeadm, Kubelet, and Kubectl"
+     yum_repository:
+       name: kubernetes
+       description: "Kubernetes"
+       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+       gpgcheck: yes
+       repo_gpgcheck: yes
+       enabled: yes
+       gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+       exclude: kubelet kubeadm kubectl
+     tags:
+       - repoaddk
+
+   -  name: add cri-o repository
+      shell: curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/devel:kubic:libcontainers:stable.repo && curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.21.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:1.21/CentOS_8/devel:kubic:libcontainers:stable:cri-o:1.21.repo
+      tags:
+        - repoadd
+
+   -  name: Install all kube programs on workers
+      dnf:
+         name:
+            - cri-o
+            - kubeadm
+            - kubelet
+         disable_excludes: kubernetes
+         skip_broken: true
+      ignore_errors: True
+      tags:
+        - installwork
+      when: "'workers' in group_names"
+
+   -  name: Install all kube programs on master
+      dnf:
+         name:
+            - cri-o
+            - kubeadm
+            - kubelet
+            - kubectl
+            - nano
+         disable_excludes: kubernetes
+         skip_broken: true
+      ignore_errors: True
+      tags:
+        - installmaster
+      when: "'master' in group_names"
+
+
+
+
+
+
+
+
+
+
+
+
+

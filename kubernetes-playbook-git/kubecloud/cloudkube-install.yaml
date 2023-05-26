@@ -1,0 +1,59 @@
+---
+ - hosts: 'cloudworkers' 
+   become: true
+   name: Install containerd, kubectl, kubelet and kubeadm on AlmaLinux 9
+
+   tasks:
+  
+   - name: "Creating Yum Repo For Kubeadm, Kubelet, and Kubectl"
+     become: true
+     yum_repository:
+       name: kubernetes
+       description: "Kubernetes"
+       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-aarch64
+       gpgcheck: yes
+       repo_gpgcheck: yes
+       enabled: yes
+       gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+       exclude: kubelet kubeadm kubectl
+     tags:
+       - repoaddk
+
+   -  name: download cri-o repository
+      shell: curl -L -o cri-o.rpm https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.24/CentOS_8/aarch64/cri-o-1.24.5-1.4.el8.aarch64.rpm
+      tags:
+        - repoadd
+
+   -  name: add cri-o repository
+      become: true
+      shell: dnf localinstall -y cri-o.rpm && rm cri-o.rpm
+      tags:
+        - repoadd
+
+   -  name: Install all kube programs on workers
+      become: true
+      dnf:
+         name:
+            - cri-o
+            - kubeadm
+            - kubelet
+         disable_excludes: kubernetes
+         skip_broken: true
+      ignore_errors: True
+      tags:
+        - installwork
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
