@@ -1,0 +1,19 @@
+---
+  - hosts: host1
+    become: true
+    name: Install and configure Filebeat
+
+    task:
+    - name: Upgrade all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      tags:
+       - upgrade
+    - name: Autoremove unneeded packages installed as dependencies
+      ansible.builtin.dnf:
+        autoremove: yes
+      tags:
+       - autoremove
+
+
